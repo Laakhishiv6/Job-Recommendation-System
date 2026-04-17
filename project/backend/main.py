@@ -3,14 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from bson import ObjectId
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime, timedelta
 import os, shutil, re, fitz
 from pathlib import Path
 
-from db import users_collection, user_info_collection, jobs_collection
-from models import UserSignup, UserLogin, JobPosting, SkillGapRequest
+from db import users_collection, user_info_collection, jobs_collection, pending_verifications_collection
+from models import UserSignup, UserLogin, JobPosting, SkillGapRequest, VerifyEmailRequest
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from ai_engine import parse_resume_llm, get_job_recommendations, analyze_skill_gap
 from job_fetcher import fetch_and_cache_jobs, bulk_fetch_jobs, get_all_jobs_from_mongo, get_job_by_id, get_redis_stats
+from email_service import generate_verification_code, send_verification_email
 
 app = FastAPI(
     title="Job Recommendation & Skill Gap API",
@@ -46,14 +48,68 @@ def _serialize(doc: dict) -> dict:
 
 @app.post("/signup", tags=["Auth"])
 async def signup(user: UserSignup):
+    if len(user.name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Name must be at least 2 characters")
+    if len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
     if users_collection.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    code = generate_verification_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+    # Upsert pending verification (allows resend if user tries again)
+    pending_verifications_collection.update_one(
+        {"email": user.email},
+        {"$set": {
+            "name": user.name.strip(),
+            "email": user.email,
+            "password_hash": hash_password(user.password),
+            "code": code,
+            "expires_at": expires_at,
+        }},
+        upsert=True,
+    )
+
+    sent = send_verification_email(user.email, code, user.name.strip())
+    if not sent:
+        pending_verifications_collection.delete_one({"email": user.email})
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send verification email. Check EMAIL_ADDRESS and EMAIL_PASSWORD in .env",
+        )
+
+    return {"message": "Verification code sent to your email. Check your inbox."}
+
+
+@app.post("/verify-email", tags=["Auth"])
+async def verify_email(data: VerifyEmailRequest):
+    pending = pending_verifications_collection.find_one({"email": data.email})
+    if not pending:
+        raise HTTPException(
+            status_code=404,
+            detail="No pending verification found. Please sign up again.",
+        )
+
+    if pending["expires_at"] < datetime.utcnow():
+        pending_verifications_collection.delete_one({"email": data.email})
+        raise HTTPException(status_code=400, detail="Code expired. Please sign up again.")
+
+    if pending["code"] != data.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    if users_collection.find_one({"email": data.email}):
+        pending_verifications_collection.delete_one({"email": data.email})
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     users_collection.insert_one({
-        "name": user.name,
-        "email": user.email,
-        "password": hash_password(user.password),
+        "name": pending["name"],
+        "email": pending["email"],
+        "password": pending["password_hash"],
     })
-    return {"message": "Account created successfully"}
+    pending_verifications_collection.delete_one({"email": data.email})
+
+    return {"message": "Account created successfully! You can now sign in."}
 
 
 @app.post("/login", tags=["Auth"])

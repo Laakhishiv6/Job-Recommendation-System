@@ -356,6 +356,12 @@ def fetch_and_cache_jobs(
             total_stored[k] += sr.get(k, 0)
         all_cleaned.extend(page_clean)
 
+    # ── When force_refresh=True, wipe DB and replace with fresh results ───
+    if force_refresh and all_cleaned:
+        fresh_ids = {j["source_id"] for j in all_cleaned}
+        fetched_jobs_col.delete_many({"source_id": {"$nin": list(fresh_ids)}})
+        print(f"  [MONGO SYNC] Replaced DB with {len(fresh_ids)} fresh jobs.")
+
     mongo_total = fetched_jobs_col.count_documents({})
     return {
         "query":         query,

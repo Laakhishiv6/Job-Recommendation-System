@@ -13,7 +13,7 @@ function HowItWorks() {
         style={{ background: "none", border: "none", cursor: "pointer",
           color: "var(--accent)", fontSize: 13, fontWeight: 600, padding: 0 }}
       >
-        {open ? "▾" : "▸"} How does caching work?
+        {/* {open ? "▾" : "▸"} How does caching work? */}
       </button>
       {open && (
         <div style={{ marginTop: 10, padding: "14px 18px", borderRadius: "var(--radius-sm)",
@@ -21,7 +21,7 @@ function HowItWorks() {
           color: "var(--muted)", lineHeight: 1.8 }}>
           <div style={{ display: "grid", gap: 8 }}>
             {[
-              { icon: "🔵", label: "Search Cache",  desc: 'Click "Search Cache" — queries MongoDB only. Zero JSearch API calls. Instant.' },
+              { icon: "🔵", label: "local search",  desc: 'Click "local search" — queries MongoDB only. Zero JSearch API calls. Instant.' },
               { icon: "🟡", label: "Fetch from JSearch", desc: 'Click "Fetch from JSearch" — calls the live JSearch API, stores ALL results in MongoDB, then shows them. Use this to populate or refresh data.' },
               { icon: "♻️", label: "Auto cache",    desc: "Every JSearch result is automatically stored in MongoDB forever. Future cache searches find them instantly." },
             ].map(r => (
@@ -122,7 +122,7 @@ export default function Jobs() {
         <p>
           {totalInDb !== null
             ? <><span className="text-accent">{totalInDb}</span> jobs in MongoDB cache</>
-            : "Search cached jobs or fetch fresh data from JSearch."}
+            : "local searchd jobs or fetch fresh data from JSearch."}
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export default function Jobs() {
           {/* Cache search — primary */}
           <button className="apply-btn" style={{ padding: "10px 22px", fontSize: 14 }}
             onClick={searchCache} disabled={anyLoading}>
-            {fetching ? "Searching cache…" : "🔵 Search Cache"}
+            {fetching ? "Searching cache…" : "🔵 local search"}
           </button>
 
           {/* JSearch live — outlined / secondary */}

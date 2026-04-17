@@ -1,0 +1,22 @@
+# Environment files
+.env
+*.env
+project/backend/.env
+project/frontend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+
+# Build caches
+.cache/
+project/frontend/node_modules/.cache/
+
+# Logs
+*.log
+
+# Uploaded/generated files
+project/backend/resumes/

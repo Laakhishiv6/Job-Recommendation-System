@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
 
@@ -11,6 +11,11 @@ class UserSignup(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    code: str
 
 
 class JobPosting(BaseModel):

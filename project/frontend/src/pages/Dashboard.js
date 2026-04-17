@@ -47,7 +47,7 @@ export default function Dashboard() {
         <StatCard label="Skills detected"  value={profile?.skills?.length}    accent />
         <StatCard label="Experience roles" value={profile?.experience?.length} />
         <StatCard label="Jobs in database" value={stats?.mongo_total_jobs}     />
-        <StatCard label="Redis keys"       value={stats?.redis_total_keys}     sub={stats?.redis_available ? "Cache active" : "Cache offline"} />
+        {/* <StatCard label="Redis keys"       value={stats?.redis_total_keys}     sub={stats?.redis_available ? "Cache active" : "Cache offline"} /> */}
       </div>
 
       {/* Quick actions */}
