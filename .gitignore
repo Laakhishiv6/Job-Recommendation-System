@@ -1,8 +1,8 @@
 # Environment files
 .env
 *.env
-project/backend/.env
-project/frontend/.env
+backend/.env
+frontend/.env
 
 # Python
 __pycache__/
@@ -13,10 +13,10 @@ node_modules/
 
 # Build caches
 .cache/
-project/frontend/node_modules/.cache/
+frontend/node_modules/.cache/
 
 # Logs
 *.log
 
 # Uploaded/generated files
-project/backend/resumes/
+backend/resumes/
