@@ -1,4 +1,4 @@
-# CareerLens - Job Recommendation System
+# CareerLens Context Aware Job Recommendation and Skill Gap Analysis
 
 ## Project Structure
 ```text
