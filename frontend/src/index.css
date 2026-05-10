@@ -210,3 +210,117 @@ h3 { font-family: var(--font-head); font-weight: 700; font-size: 17px; }
 .wrap { flex-wrap: wrap; }
 .empty-state { text-align: center; padding: 60px 0; color: var(--muted); }
 .empty-state h3 { font-family: var(--font-head); color: var(--text); margin-bottom: 8px; }
+
+/* ─── HAMBURGER BUTTON ───────────────────────────────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px; height: 36px;
+  padding: 7px;
+  background: none; border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.nav-hamburger:hover { background: var(--border); }
+.nav-hamburger span {
+  display: block; width: 100%; height: 2px;
+  background: var(--text); border-radius: 2px;
+  transition: transform .25s, opacity .2s;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ─── MOBILE NAV OVERLAY ─────────────────────────────────────────── */
+.nav-overlay {
+  display: none;
+  position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.5); z-index: 98;
+}
+.nav-overlay.open { display: block; }
+
+/* ─── AUTH PAGE WRAPPERS ─────────────────────────────────────────── */
+.auth-wrap      { max-width: 420px; margin: 60px auto; }
+.auth-wrap-wide { max-width: 440px; margin: 60px auto; }
+
+/* ─── OTP CODE INPUTS ────────────────────────────────────────────── */
+.otp-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; }
+.otp-input {
+  width: 48px; height: 56px;
+  text-align: center; font-size: 24px; font-weight: 700;
+  background: var(--bg); border-radius: 8px;
+  color: var(--text); outline: none;
+  transition: border-color .15s; font-family: monospace;
+}
+
+/* ─── SEARCH ACTIONS (Jobs page) ─────────────────────────────────── */
+.search-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ─── TABLET & BELOW  (≤ 768 px) ────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar { padding: 0 16px; }
+  .nav-hamburger { display: flex; }
+
+  .nav-links {
+    display: none;
+    position: fixed; top: 60px; left: 0; right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 20px;
+    flex-direction: column; align-items: stretch; gap: 4px;
+    z-index: 99;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  .nav-links.open { display: flex; }
+
+  .nav-link { padding: 11px 14px; font-size: 15px; }
+  .nav-btn  { padding: 11px 14px; font-size: 15px; margin-left: 0 !important; text-align: center; }
+
+  .main-content { padding: 20px 16px; }
+
+  h1 { font-size: 26px; }
+  h2 { font-size: 19px; }
+
+  .auth-wrap, .auth-wrap-wide { margin: 28px auto; }
+
+  .upload-zone { padding: 32px 20px; }
+
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .tab  { white-space: nowrap; }
+
+  .jobs-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── MOBILE (≤ 640 px) ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .search-actions { flex-direction: column; }
+  .search-actions > button { width: 100%; justify-content: center; }
+}
+
+/* ─── SMALL MOBILE (≤ 480 px) ───────────────────────────────────── */
+@media (max-width: 480px) {
+  .main-content { padding: 16px 12px; }
+
+  h1 { font-size: 22px; }
+
+  .card { padding: 16px; }
+  .job-card { padding: 14px; }
+
+  .score-ring { width: 44px; height: 44px; font-size: 13px; }
+
+  .auth-wrap, .auth-wrap-wide { margin: 16px auto; }
+
+  .upload-zone { padding: 24px 16px; }
+  .upload-icon { font-size: 32px; }
+
+  .page-header { margin-bottom: 20px; }
+
+  .otp-row { gap: 6px; }
+  .otp-input { width: 40px !important; height: 48px !important; font-size: 20px !important; }
+
+  .empty-state { padding: 40px 0; }
+}

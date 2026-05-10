@@ -184,7 +184,7 @@ function VerifyForm({ email, name, onResend }) {
 
       <form onSubmit={submit}>
         {/* 6-digit code inputs */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 24 }}>
+        <div className="otp-row">
           {digits.map((d, i) => (
             <input
               key={i}
@@ -196,13 +196,8 @@ function VerifyForm({ email, name, onResend }) {
               maxLength={1}
               inputMode="numeric"
               autoComplete="one-time-code"
-              style={{
-                width: 48, height: 56, textAlign: "center", fontSize: 24, fontWeight: 700,
-                background: "var(--bg)", border: `1.5px solid ${d ? "var(--accent)" : "var(--border2)"}`,
-                borderRadius: 8, color: "var(--text)", outline: "none",
-                transition: "border-color .15s",
-                fontFamily: "monospace",
-              }}
+              className="otp-input"
+              style={{ border: `1.5px solid ${d ? "var(--accent)" : "var(--border2)"}` }}
             />
           ))}
         </div>
@@ -262,7 +257,7 @@ export default function Signup() {
   };
 
   return (
-    <div style={{ maxWidth: 440, margin: "60px auto" }}>
+    <div className="auth-wrap-wide">
       <div className="card">
         {/* Step indicator */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>

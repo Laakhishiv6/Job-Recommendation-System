@@ -23,7 +23,7 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "60px auto" }}>
+    <div className="auth-wrap">
       <div className="card">
         <h2 style={{ marginBottom: 6 }}>Welcome back</h2>
         <p className="text-muted text-sm" style={{ marginBottom: 24 }}>

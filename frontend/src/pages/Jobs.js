@@ -142,7 +142,7 @@ export default function Jobs() {
         </div>
 
         {/* Two distinct buttons */}
-        <div className="flex wrap" style={{ gap: 10 }}>
+        <div className="search-actions">
           {/* Cache search — primary */}
           <button className="apply-btn" style={{ padding: "10px 22px", fontSize: 14 }}
             onClick={searchCache} disabled={anyLoading}>
