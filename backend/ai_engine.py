@@ -200,3 +200,97 @@ Rules:
         "readiness_score": readiness,
         "summary": "Could not generate detailed analysis. Showing basic skill comparison.",
     }
+
+
+# ─── 4. Project Ideas ────────────────────────────────────────────────────────
+
+def generate_project_ideas(
+    user_skills: list[str],
+    user_experience: list[dict],
+    user_education: list[dict],
+    target_job_title: str,
+    required_skills: list[str],
+    missing_skills: list[str],
+) -> dict:
+    prompt = f"""You are a senior software engineer and career mentor. Suggest practical portfolio projects for a job seeker.
+
+First, classify the user as STUDENT or PROFESSIONAL:
+- STUDENT: currently studying, only intern/no experience, or fresh graduate within 1 year
+- PROFESSIONAL: has real full-time work experience
+
+User Skills: {', '.join(user_skills) if user_skills else 'None listed'}
+User Experience:
+{json.dumps(user_experience, indent=2) if user_experience else '[]'}
+User Education:
+{json.dumps(user_education, indent=2) if user_education else '[]'}
+
+Target Role: {target_job_title}
+Required Skills for Role: {', '.join(required_skills) if required_skills else 'Infer from job title'}
+Skills the User Still Needs: {', '.join(missing_skills) if missing_skills else 'None identified'}
+
+Return ONLY valid JSON – no explanation, no markdown:
+{{
+  "user_context": "student",
+  "context_note": "One sentence explaining why classified as student or professional",
+  "projects": [
+    {{
+      "name": "Project title",
+      "type": "Web App",
+      "difficulty": "Intermediate",
+      "estimated_time": "3–4 weeks",
+      "description": "2-3 sentences on what it does and why it fits the target role",
+      "tech_stack": ["Tech1", "Tech2"],
+      "implementation_steps": [
+        "Step 1: ...",
+        "Step 2: ...",
+        "Step 3: ...",
+        "Step 4: ...",
+        "Step 5: ..."
+      ],
+      "why_it_helps": "One sentence on how this project proves readiness for the role"
+    }}
+  ]
+}}
+Rules:
+- Generate exactly 3 projects
+- STUDENT projects: beginner-to-intermediate, portfolio-focused, realistic solo builds
+- PROFESSIONAL projects: intermediate-to-advanced, production-thinking, scalable designs
+- Each project must use at least 2 skills from required_skills or missing_skills
+- difficulty must be one of: Beginner, Intermediate, Advanced
+- type examples: Web App, REST API, CLI Tool, ML Model, Data Pipeline, Dashboard, Mobile App
+- Keep descriptions concise and actionable"""
+
+    raw = _chat(prompt, max_tokens=1600, temperature=0.3)
+    parsed = _extract_json_block(raw)
+
+    if parsed and isinstance(parsed.get("projects"), list):
+        for proj in parsed["projects"]:
+            if not isinstance(proj.get("tech_stack"), list):
+                proj["tech_stack"] = []
+            if not isinstance(proj.get("implementation_steps"), list):
+                proj["implementation_steps"] = []
+        return parsed
+
+    # Fallback: generic ideas based on job title
+    return {
+        "user_context": "unknown",
+        "context_note": "Could not determine user context from profile.",
+        "projects": [
+            {
+                "name": f"Portfolio project for {target_job_title}",
+                "type": "Web App",
+                "difficulty": "Intermediate",
+                "estimated_time": "3–4 weeks",
+                "description": f"Build a full-stack project that demonstrates core skills needed for a {target_job_title} role.",
+                "tech_stack": required_skills[:4] if required_skills else ["Python", "React"],
+                "implementation_steps": [
+                    "Step 1: Plan the project scope and define core features",
+                    "Step 2: Set up project structure and development environment",
+                    "Step 3: Implement core backend logic and data models",
+                    "Step 4: Build the frontend interface and connect to the API",
+                    "Step 5: Deploy to a cloud platform and document the project",
+                ],
+                "why_it_helps": f"Demonstrates hands-on experience with skills required for {target_job_title}",
+            }
+        ],
+    }

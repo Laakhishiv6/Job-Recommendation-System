@@ -4,23 +4,19 @@ import JobCard from "../components/JobCard";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Recommend() {
-  const [recs, setRecs]         = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-  const [meta, setMeta]         = useState(null);
+  const [recs, setRecs]             = useState([]);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
+  const [meta, setMeta]             = useState(null);
   const [hasProfile, setHasProfile] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check profile exists
     api.get("/my-profile").catch(() => setHasProfile(false));
   }, []);
 
   const fetchRecs = async () => {
-    setLoading(true);
-    setError("");
-    setRecs([]);
-    setMeta(null);
+    setLoading(true); setError(""); setRecs([]); setMeta(null);
     try {
       const res = await api.get("/recommend?limit=8");
       setRecs(res.data.recommendations || []);
@@ -34,9 +30,7 @@ export default function Recommend() {
       } else {
         setError(detail || "Failed to fetch recommendations.");
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleSkillGap = (job) => {
@@ -79,16 +73,15 @@ export default function Recommend() {
         </p>
       </div>
 
-      {/* Trigger card */}
       {recs.length === 0 && !loading && (
-        <div className="card" style={{ marginBottom: 24, textAlign: "center", padding: "40px 32px" }}>
+        <div className="card" style={{ marginBottom: 24, textAlign: "center", padding: "48px 32px" }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>✨</div>
           <h3>Ready to find your perfect match?</h3>
           <p className="text-muted" style={{ marginTop: 8, marginBottom: 24 }}>
-            Our AI will compare your profile against all cached jobs and rank them for you.
+            Our AI compares your profile against all cached jobs and ranks them by fit — skills, experience, and role type.
           </p>
           <button className="apply-btn" style={{ display: "inline-flex" }} onClick={fetchRecs}>
-            Generate Recommendations
+            Generate Recommendations →
           </button>
           {error && (
             <div className="alert alert-error" style={{ marginTop: 16, textAlign: "left" }}>
@@ -104,7 +97,9 @@ export default function Recommend() {
       {loading && (
         <div className="loading-center">
           <div className="spinner" />
-          <p style={{ marginTop: 16 }}>AI is analysing your profile against {meta?.total_jobs_analyzed || "all"} cached jobs…</p>
+          <p style={{ marginTop: 16 }}>
+            AI is analysing your profile against {meta?.total_jobs_analyzed || "all"} cached jobs…
+          </p>
         </div>
       )}
 
@@ -126,12 +121,7 @@ export default function Recommend() {
 
           <div className="jobs-grid">
             {recs.map((job, i) => (
-              <JobCard
-                key={job.job_id || i}
-                job={job}
-                showScore
-                onSkillGap={handleSkillGap}
-              />
+              <JobCard key={job.job_id || i} job={job} showScore onSkillGap={handleSkillGap} />
             ))}
           </div>
 

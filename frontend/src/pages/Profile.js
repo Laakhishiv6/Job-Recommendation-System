@@ -1,171 +1,195 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
-export default function Profile() {
-  const { user }                = useAuth();
-  const [profile, setProfile]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState("");
-  const [drag, setDrag]         = useState(false);
-  const fileRef                 = useRef();
+// ── Change Password card ───────────────────────────────────────────────────
+function ChangePasswordCard() {
+  const [form, setForm]     = useState({ current: "", next: "", confirm: "" });
+  const [show, setShow]     = useState({ current: false, next: false, confirm: false });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg]       = useState({ text: "", type: "" });
 
-  useEffect(() => { loadProfile(); }, []);
+  const toggle = key => setShow(s => ({ ...s, [key]: !s[key] }));
 
-  const loadProfile = async () => {
+  const submit = async e => {
+    e.preventDefault();
+    setMsg({ text: "", type: "" });
+    if (form.next !== form.confirm) {
+      setMsg({ text: "New passwords do not match.", type: "error" }); return;
+    }
+    if (form.next.length < 6) {
+      setMsg({ text: "New password must be at least 6 characters.", type: "error" }); return;
+    }
+    setSaving(true);
+    try {
+      await api.post("/change-password", { current_password: form.current, new_password: form.next });
+      setMsg({ text: "Password changed successfully!", type: "success" });
+      setForm({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      setMsg({ text: err.response?.data?.detail || "Failed to change password.", type: "error" });
+    } finally { setSaving(false); }
+  };
+
+  const pwField = (key, label, placeholder) => (
+    <div className="form-group">
+      <label>{label}</label>
+      <div style={{ position: "relative" }}>
+        <input
+          className="form-input"
+          type={show[key] ? "text" : "password"}
+          placeholder={placeholder}
+          value={form[key]}
+          onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+          required
+          style={{ paddingRight: 52, width: "100%" }}
+        />
+        <button type="button" onClick={() => toggle(key)} style={{
+          position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+          background: "none", border: "none", cursor: "pointer",
+          color: "var(--muted)", fontSize: 13, padding: 0,
+        }}>
+          {show[key] ? "Hide" : "Show"}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="card">
+      <h3 style={{ marginBottom: 18 }}>Change Password</h3>
+      {msg.text && (
+        <div className={`alert alert-${msg.type === "success" ? "success" : "error"}`}
+             style={{ marginBottom: 16 }}>
+          {msg.text}
+        </div>
+      )}
+      <form onSubmit={submit} style={{ maxWidth: 420 }}>
+        {pwField("current", "Current password",    "Enter current password")}
+        {pwField("next",    "New password",         "Min 6 characters")}
+        {pwField("confirm", "Confirm new password", "Repeat new password")}
+        {form.next.length > 0 && form.next.length < 6 && (
+          <p style={{ fontSize: 12, color: "var(--danger)", marginTop: -10, marginBottom: 12 }}>
+            At least 6 characters required
+          </p>
+        )}
+        <button className="apply-btn" style={{ padding: "10px 24px", fontSize: 14 }} disabled={saving}>
+          {saving ? "Saving…" : "Update Password"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── Danger Zone card ───────────────────────────────────────────────────────
+function DangerZone() {
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [open,    setOpen]    = useState(false);
+  const { user, logout }      = useAuth();
+  const navigate              = useNavigate();
+
+  const deleteAccount = async () => {
+    if (confirm !== user) return;
     setLoading(true);
     try {
-      const res = await api.get("/my-profile");
-      setProfile(res.data.profiles);
-    } catch {
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const uploadFile = async (file) => {
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Only PDF files are supported."); return;
-    }
-    setUploading(true);
-    setError(""); setSuccess("");
-    const fd = new FormData();
-    fd.append("file", file);
-    try {
-      const res = await api.post("/upload-resume", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setSuccess("Resume parsed and stored successfully!");
-      await loadProfile();
+      await api.delete("/delete-account");
+      logout();
+      navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.detail || "Upload failed.");
-    } finally {
-      setUploading(false);
-    }
+      alert(err.response?.data?.detail || "Failed to delete account.");
+    } finally { setLoading(false); }
   };
 
-  const onFileChange  = e => uploadFile(e.target.files[0]);
-  const onDrop        = e => { e.preventDefault(); setDrag(false); uploadFile(e.dataTransfer.files[0]); };
-  const onDragOver    = e => { e.preventDefault(); setDrag(true); };
-  const onDragLeave   = () => setDrag(false);
+  return (
+    <div className="card" style={{ borderColor: "rgba(255,95,95,.25)" }}>
+      <h3 style={{ color: "var(--danger)", marginBottom: 6 }}>Danger Zone</h3>
+      <p className="text-muted text-sm" style={{ marginBottom: 14 }}>
+        Permanently delete your account and all associated data. This cannot be undone.
+      </p>
+      {!open ? (
+        <button
+          className="apply-btn"
+          onClick={() => setOpen(true)}
+          style={{ background: "rgba(255,95,95,.12)", color: "var(--danger)",
+                   border: "1px solid rgba(255,95,95,.3)", fontSize: 13 }}
+        >
+          Delete My Account
+        </button>
+      ) : (
+        <div style={{ maxWidth: 420 }}>
+          <p style={{ fontSize: 13, color: "var(--text)", marginBottom: 10 }}>
+            Type your email address <strong style={{ color: "var(--danger)" }}>{user}</strong> to confirm:
+          </p>
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <input
+              className="form-input"
+              placeholder={user}
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              style={{ borderColor: confirm === user ? "var(--danger)" : undefined }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              className="apply-btn"
+              onClick={deleteAccount}
+              disabled={confirm !== user || loading}
+              style={{ background: "var(--danger)", color: "#fff", opacity: confirm === user ? 1 : 0.4 }}
+            >
+              {loading ? "Deleting…" : "Permanently Delete"}
+            </button>
+            <button
+              className="apply-btn outline"
+              onClick={() => { setOpen(false); setConfirm(""); }}
+              style={{ fontSize: 13 }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+export default function Profile() {
+  const { user } = useAuth();
 
   return (
     <div>
       <div className="page-header">
-        <h1>My Profile</h1>
-        <p>Upload your resume to power personalised recommendations and skill gap analysis.</p>
+        <h1>Account Settings</h1>
+        <p>Manage your login credentials and account preferences.</p>
       </div>
 
-      {/* Upload zone */}
-      <div
-        className={`upload-zone ${drag ? "drag" : ""}`}
-        style={{ marginBottom: 24 }}
-        onClick={() => fileRef.current.click()}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-      >
-        <input ref={fileRef} type="file" accept=".pdf" onChange={onFileChange} />
-        <div className="upload-icon">{uploading ? "⏳" : "📄"}</div>
-        <h3>{uploading ? "Parsing resume…" : "Drop your PDF resume here"}</h3>
-        <p>{uploading ? "This may take a few seconds" : "or click to browse · PDF only"}</p>
+      <div style={{ display: "grid", gap: 16 }}>
+
+        {/* Account info */}
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Account Information</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 16 }}>
+            <div>
+              <div className="text-muted text-sm">Registered Email</div>
+              <div style={{ fontWeight: 500, marginTop: 4, wordBreak: "break-all" }}>{user}</div>
+              <div className="text-muted text-sm" style={{ marginTop: 4, fontSize: 12 }}>
+                Email cannot be changed after registration
+              </div>
+            </div>
+            <div>
+              <div className="text-muted text-sm">Account Type</div>
+              <div style={{ fontWeight: 500, marginTop: 4 }}>
+                <span className="badge green">Standard User</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ChangePasswordCard />
+
+        <DangerZone />
       </div>
-
-      {error   && <div className="alert alert-error"   style={{ marginBottom: 16 }}>{error}</div>}
-      {success && <div className="alert alert-success" style={{ marginBottom: 16 }}>{success}</div>}
-
-      {loading ? (
-        <div className="spinner" />
-      ) : profile ? (
-        <div style={{ display: "grid", gap: 16 }}>
-
-          {/* Basic info */}
-          <div className="card">
-            <h3 style={{ marginBottom: 16 }}>Basic information</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 20 }}>
-              {[
-                { label: "Name",  value: profile.name },
-                { label: "Email", value: profile.email || user },
-                { label: "Phone", value: profile.phone },
-              ].map(f => (
-                <div key={f.label}>
-                  <div className="text-muted text-sm">{f.label}</div>
-                  <div style={{ fontWeight: 500, marginTop: 4 }}>{f.value || "—"}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Skills */}
-          <div className="card">
-            <div className="flex justify-between items-center" style={{ marginBottom: 14 }}>
-              <h3>Skills</h3>
-              <span className="badge accent">{profile.skills?.length || 0} detected</span>
-            </div>
-            {profile.skills?.length > 0 ? (
-              <div className="skills-list">
-                {profile.skills.map(s => <span key={s} className="badge accent">{s}</span>)}
-              </div>
-            ) : (
-              <p className="text-muted text-sm">No skills detected — try re-uploading your resume.</p>
-            )}
-          </div>
-
-          {/* Experience */}
-          {profile.experience?.length > 0 && (
-            <div className="card">
-              <h3 style={{ marginBottom: 16 }}>Experience</h3>
-              <div style={{ display: "grid", gap: 14 }}>
-                {profile.experience.map((exp, i) => (
-                  <div key={i} style={{
-                    padding: "14px 18px", borderRadius: "var(--radius-sm)",
-                    background: "var(--bg)", border: "1px solid var(--border2)"
-                  }}>
-                    <div style={{ fontFamily: "var(--font-head)", fontWeight: 700 }}>{exp.title || "Role"}</div>
-                    <div className="text-muted text-sm" style={{ marginTop: 3 }}>
-                      {exp.company}{exp.duration ? ` · ${exp.duration}` : ""}
-                    </div>
-                    {exp.summary && (
-                      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
-                        {exp.summary}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Education */}
-          {profile.education?.length > 0 && (
-            <div className="card">
-              <h3 style={{ marginBottom: 16 }}>Education</h3>
-              <div style={{ display: "grid", gap: 12 }}>
-                {profile.education.map((edu, i) => (
-                  <div key={i} style={{
-                    padding: "14px 18px", borderRadius: "var(--radius-sm)",
-                    background: "var(--bg)", border: "1px solid var(--border2)"
-                  }}>
-                    <div style={{ fontFamily: "var(--font-head)", fontWeight: 700 }}>{edu.degree || "Degree"}</div>
-                    <div className="text-muted text-sm" style={{ marginTop: 3 }}>
-                      {edu.institution}{edu.year ? ` · ${edu.year}` : ""}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <h3>No profile yet</h3>
-          <p>Upload your PDF resume above to get started.</p>
-        </div>
-      )}
     </div>
   );
 }
