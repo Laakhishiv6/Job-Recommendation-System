@@ -11,7 +11,7 @@ The platform combines **LLM-based resume parsing, semantic job matching, skill g
 ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
 ![AWS](https://img.shields.io/badge/Deployed%20on-AWS-FF9900?logo=amazonaws&logoColor=white)
 
-**Live Demo:** http://15.206.100.29
+
 
 ---
 
